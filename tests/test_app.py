@@ -14,6 +14,7 @@ class JournalAppTest(unittest.TestCase):
             {
                 "TESTING": True,
                 "SECRET_KEY": "test-secret",
+                "JOURNAL_PASSWORD": "test-password",
                 "DATABASE": root / "test.db",
                 "UPLOAD_FOLDER": root / "uploads",
             }
@@ -24,15 +25,30 @@ class JournalAppTest(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def csrf_token(self):
-        self.client.get("/")
+        self.client.get("/login")
         with self.client.session_transaction() as session:
             return session["csrf_token"]
 
-    def test_home_and_history_render(self):
+    def login(self, password="test-password"):
+        return self.client.post(
+            "/login",
+            data={"csrf_token": self.csrf_token(), "password": password},
+            follow_redirects=True,
+        )
+
+    def test_private_pages_require_login(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.location, "/login")
+
+    def test_login_home_and_history_render(self):
+        self.assertIn("密码不正确".encode(), self.login("wrong").data)
+        self.assertIn("验证成功".encode(), self.login().data)
         self.assertEqual(self.client.get("/").status_code, 200)
         self.assertEqual(self.client.get("/history").status_code, 200)
 
     def test_create_update_search_and_delete_entry(self):
+        self.login()
         token = self.csrf_token()
         response = self.client.post(
             "/save",
@@ -75,6 +91,7 @@ class JournalAppTest(unittest.TestCase):
         self.assertIn("该日科研日志已删除".encode(), response.data)
 
     def test_rejects_post_without_csrf(self):
+        self.login()
         response = self.client.post("/save", data={})
         self.assertEqual(response.status_code, 400)
 

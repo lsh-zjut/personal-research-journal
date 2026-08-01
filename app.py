@@ -28,10 +28,13 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("JOURNAL_SECRET_KEY", "local-research-journal"),
+        SECRET_KEY=load_or_create_secret_key(),
+        JOURNAL_PASSWORD=load_journal_password(),
         DATABASE=BASE_DIR / "instance" / "journal.db",
         UPLOAD_FOLDER=BASE_DIR / "uploads",
         MAX_CONTENT_LENGTH=20 * 1024 * 1024,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
     )
     if test_config:
         app.config.update(test_config)
@@ -45,12 +48,40 @@ def create_app(test_config=None):
         return {"csrf_token": get_csrf_token(), "today": date.today().isoformat()}
 
     @app.before_request
+    def require_login():
+        if request.endpoint in {"login", "static"}:
+            return None
+        if not session.get("authenticated"):
+            return redirect(url_for("login"))
+        return None
+
+    @app.before_request
     def check_csrf():
         if request.method == "POST":
             submitted = request.form.get("csrf_token", "")
             expected = session.get("csrf_token", "")
             if not expected or not hmac.compare_digest(submitted, expected):
                 abort(400, "表单已过期，请刷新页面后重试。")
+
+    @app.route("/login", methods=("GET", "POST"))
+    def login():
+        if session.get("authenticated"):
+            return redirect(url_for("index"))
+        if request.method == "POST":
+            password = request.form.get("password", "")
+            expected = app.config["JOURNAL_PASSWORD"]
+            if expected and hmac.compare_digest(password, expected):
+                session.clear()
+                session["authenticated"] = True
+                flash("验证成功，欢迎回来。", "success")
+                return redirect(url_for("index"))
+            flash("密码不正确，请重新输入。", "error")
+        return render_template("login.html")
+
+    @app.post("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("login"))
 
     @app.get("/")
     def index():
@@ -293,6 +324,27 @@ def get_csrf_token():
     if "csrf_token" not in session:
         session["csrf_token"] = secrets.token_hex(24)
     return session["csrf_token"]
+
+
+def load_journal_password():
+    environment_password = os.environ.get("JOURNAL_PASSWORD", "").strip()
+    if environment_password:
+        return environment_password
+    password_file = BASE_DIR / "instance" / "journal_password.txt"
+    if password_file.exists():
+        return password_file.read_text(encoding="utf-8").strip()
+    raise RuntimeError("缺少 instance/journal_password.txt，请在文件中设置访问密码。")
+
+
+def load_or_create_secret_key():
+    environment_secret = os.environ.get("JOURNAL_SECRET_KEY", "").strip()
+    if environment_secret:
+        return environment_secret
+    secret_file = BASE_DIR / "instance" / "secret_key"
+    secret_file.parent.mkdir(parents=True, exist_ok=True)
+    if not secret_file.exists():
+        secret_file.write_text(secrets.token_hex(32), encoding="utf-8")
+    return secret_file.read_text(encoding="utf-8").strip()
 
 
 app = create_app()

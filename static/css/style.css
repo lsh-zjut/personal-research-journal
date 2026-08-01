@@ -92,6 +92,10 @@ a { color: inherit; text-decoration: none; }
 
 .today-button { justify-self: end; padding: 9px 17px; border: 1px solid var(--green); border-radius: 99px; color: var(--green); font-size: 13px; font-weight: 700; transition: 0.2s; }
 .today-button:hover { color: white; background: var(--green); }
+.header-actions { justify-self: end; display: flex; align-items: center; gap: 9px; }
+.header-actions form { margin: 0; }
+.logout-button { padding: 9px 13px; border: 0; color: var(--muted); background: transparent; font-size: 12px; cursor: pointer; }
+.logout-button:hover { color: var(--orange); }
 
 main { width: min(1400px, calc(100% - 48px)); margin: 42px auto 80px; }
 .dashboard { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 32px; align-items: start; }
@@ -206,6 +210,33 @@ main { width: min(1400px, calc(100% - 48px)); margin: 42px auto 80px; }
 .empty-state p { color: var(--muted); }
 .empty-state a { display: inline-block; margin-top: 10px; padding: 9px 18px; border-radius: 99px; color: white; background: var(--green); }
 
+.login-page {
+  min-height: calc(100vh - 250px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.72fr);
+  align-items: center;
+  gap: clamp(50px, 9vw, 140px);
+  max-width: 1080px;
+  margin: 45px auto;
+}
+.login-note { position: relative; padding: 35px 10px; }
+.login-note h1 { margin: 0; font-family: "DM Serif Display", "Noto Sans SC", serif; font-size: clamp(45px, 6vw, 76px); font-weight: 400; line-height: 1.17; letter-spacing: -0.03em; }
+.login-note > p:nth-of-type(2) { max-width: 510px; margin: 26px 0 0; color: var(--muted); font-family: serif; font-size: 15px; }
+.orbit-mark { position: absolute; z-index: -1; width: 240px; height: 240px; right: -25px; top: 15%; border: 1px solid rgba(29, 91, 73, 0.16); border-radius: 50%; }
+.orbit-mark::before, .orbit-mark::after { content: ""; position: absolute; border-radius: 50%; }
+.orbit-mark::before { inset: 35px; border: 1px dashed rgba(217, 107, 58, 0.28); }
+.orbit-mark::after { width: 13px; height: 13px; right: 20px; top: 48px; background: var(--orange); box-shadow: -174px 130px 0 var(--lime); }
+.orbit-mark span { position: absolute; inset: 77px; display: grid; place-items: center; border-radius: 50%; color: rgba(29, 91, 73, 0.2); background: rgba(255, 253, 247, 0.55); font-family: "DM Serif Display", serif; font-size: 38px; }
+.login-card { padding: 48px 42px 40px; border: 1px solid rgba(30,65,54,0.14); border-radius: 30px; background: rgba(255,253,247,0.94); box-shadow: var(--shadow); animation: rise 0.5s ease both; }
+.login-card h2 { margin: 0; font-family: "DM Serif Display", "Noto Sans SC", serif; font-size: 38px; font-weight: 400; }
+.login-card > p:not(.eyebrow) { margin: 4px 0 28px; color: var(--muted); font-size: 12px; }
+.login-card form { display: grid; gap: 20px; }
+.login-card .primary-button { width: 100%; margin-top: 3px; }
+.login-card > small { display: block; margin-top: 22px; color: #95a19b; font-size: 10px; text-align: center; }
+.login-lock { width: 48px; height: 48px; display: grid; place-items: end center; margin-bottom: 25px; border-radius: 15px; background: #e7edda; }
+.login-lock span { position: relative; width: 22px; height: 18px; margin-bottom: 8px; border-radius: 4px; background: var(--green); }
+.login-lock span::before { content: ""; position: absolute; width: 12px; height: 12px; left: 3px; top: -10px; border: 2px solid var(--green); border-bottom: 0; border-radius: 8px 8px 0 0; }
+
 footer { padding: 24px; color: #8a9691; font-size: 10px; text-align: center; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -217,12 +248,17 @@ footer { padding: 24px; color: #8a9691; font-size: 10px; text-align: center; }
   .main-nav a { width: 45%; }
   .main-nav a::after { bottom: 6px; }
   .today-button { display: none; }
+  .header-actions { display: none; }
   main { width: min(100% - 28px, 700px); margin-top: 25px; }
   .dashboard { grid-template-columns: 1fr; }
   .sidebar { position: static; grid-template-columns: 1fr 1fr; }
   .journal-panel { order: -1; }
   footer { padding-bottom: 90px; }
   .history-hero { align-items: stretch; flex-direction: column; }
+  .login-page { grid-template-columns: 1fr; gap: 18px; max-width: 620px; margin-top: 5px; }
+  .login-note { padding-bottom: 5px; }
+  .login-note h1 { font-size: clamp(38px, 10vw, 60px); }
+  .orbit-mark { right: 0; opacity: 0.65; }
 }
 
 @media (max-width: 600px) {
@@ -248,6 +284,9 @@ footer { padding: 24px; color: #8a9691; font-size: 10px; text-align: center; }
   .archive-card h2 { font-size: 21px; }
   .flash-stack { top: 82px; left: 14px; right: 14px; }
   .flash { min-width: 0; }
+  .login-note > p:nth-of-type(2) { font-size: 13px; }
+  .login-card { padding: 34px 24px 30px; border-radius: 23px; }
+  .orbit-mark { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}访问验证 · 研迹{% endblock %}
+
+{% block content %}
+<section class="login-page">
+  <div class="login-note">
+    <p class="eyebrow">PRIVATE RESEARCH ARCHIVE</p>
+    <h1>想法需要空间，<br>记录需要边界。</h1>
+    <p>这里保存着实验过程、阶段结论与尚未完成的思考。验证身份后，继续今天的研究。</p>
+    <div class="orbit-mark"><span>研</span></div>
+  </div>
+  <div class="login-card">
+    <div class="login-lock" aria-hidden="true"><span></span></div>
+    <p class="eyebrow">ACCESS CHECK</p>
+    <h2>访问验证</h2>
+    <p>请输入科研日志密码</p>
+    <form method="post" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="field">
+        <span>访问密码</span>
+        <input type="password" name="password" inputmode="numeric" autofocus required placeholder="••••">
+      </label>
+      <button class="primary-button" type="submit">进入科研日志 →</button>
+    </form>
+    <small>验证状态仅保存在当前浏览器会话中</small>
+  </div>
+</section>
+{% endblock %}

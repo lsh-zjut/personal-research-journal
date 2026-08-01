@@ -8,6 +8,8 @@ NUL
 
 # Personal journal data stays local.
 instance/*.db
+instance/journal_password.txt
+instance/secret_key
 uploads/*
 !uploads/.gitkeep
 .env
