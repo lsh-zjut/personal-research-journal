@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}日志档案 · 研迹{% endblock %}
+
+{% block content %}
+<section class="history-page">
+  <div class="history-hero">
+    <div>
+      <p class="eyebrow">RESEARCH ARCHIVE</p>
+      <h1>日志档案</h1>
+      <p>回看方法如何形成，也回看问题如何被逐步拆开。</p>
+    </div>
+    <form class="search-form" method="get">
+      <input type="search" name="q" value="{{ keyword }}" placeholder="搜索标题、正文或标签">
+      <button type="submit">搜索</button>
+    </form>
+  </div>
+
+  {% if entries %}
+  <div class="timeline">
+    {% for entry in entries %}
+    <article class="timeline-entry">
+      <div class="timeline-date">
+        <strong>{{ entry.entry_date[8:10] }}</strong>
+        <span>{{ entry.entry_date[0:7] }}</span>
+      </div>
+      <a class="archive-card" href="{{ url_for('index', date=entry.entry_date) }}">
+        <div class="archive-meta">
+          <span class="status status-{{ entry.progress }}">{{ entry.progress }}</span>
+          {% if entry.image_count %}<span>{{ entry.image_count }} 张图片</span>{% endif %}
+        </div>
+        <h2>{{ entry.title }}</h2>
+        <p>{{ entry.content | truncate(180) }}</p>
+        {% if entry.tags %}
+        <div class="tag-list">
+          {% for tag in entry.tags.split(',') %}<span># {{ tag.strip() }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span>⌁</span>
+    <h2>{{ '没有找到匹配的日志' if keyword else '还没有科研日志' }}</h2>
+    <p>{{ '换一个关键词试试。' if keyword else '从今天开始，留下第一条研究轨迹。' }}</p>
+    <a href="{{ url_for('index') }}">开始记录</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

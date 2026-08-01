@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+NUL
+
+# Personal journal data stays local.
+instance/*.db
+uploads/*
+!uploads/.gitkeep
+.env

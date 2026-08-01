@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+  <aside class="sidebar">
+    <section class="calendar-card">
+      <div class="calendar-heading">
+        <button type="button" class="icon-button" id="prev-month" aria-label="上个月">←</button>
+        <h2 id="calendar-title"></h2>
+        <button type="button" class="icon-button" id="next-month" aria-label="下个月">→</button>
+      </div>
+      <div class="week-row" aria-hidden="true">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+      <div class="calendar-legend"><i></i> 有科研记录</div>
+    </section>
+
+    <section class="stats-card">
+      <p class="eyebrow">RESEARCH RHYTHM</p>
+      <div class="stats-row">
+        <div><strong>{{ stats.total or 0 }}</strong><span>累计日志</span></div>
+        <div><strong>{{ stats.week or 0 }}</strong><span>近 7 日记录</span></div>
+      </div>
+      <p class="stats-note">稳定记录，让每一次尝试都有迹可循。</p>
+    </section>
+  </aside>
+
+  <section class="journal-panel">
+    <div class="date-kicker">{{ selected_label }}</div>
+    <div class="journal-heading">
+      <div>
+        <p class="eyebrow">DAILY LAB NOTE</p>
+        <h1>{{ entry.title if entry else '记录今天的研究进展' }}</h1>
+      </div>
+      {% if entry %}<span class="saved-badge">已记录</span>{% else %}<span class="empty-badge">待记录</span>{% endif %}
+    </div>
+
+    <form class="journal-form" action="{{ url_for('save_entry') }}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-grid">
+        <label class="field">
+          <span>日志日期</span>
+          <input type="date" name="entry_date" value="{{ selected_date }}" required data-date-navigate>
+        </label>
+        <label class="field">
+          <span>研究状态</span>
+          <select name="progress">
+            {% for value in ['进行中', '取得进展', '遇到问题', '阶段完成'] %}
+              <option value="{{ value }}" {{ 'selected' if entry and entry.progress == value }}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>今日主题</span>
+        <input type="text" name="title" maxlength="120" required
+               value="{{ entry.title if entry else '' }}" placeholder="例如：完成模型消融实验并整理结果">
+      </label>
+
+      <label class="field content-field">
+        <span>科研记录</span>
+        <textarea name="content" rows="14" required placeholder="建议记录：&#10;&#10;今天做了什么？&#10;观察到什么结果？&#10;遇到了什么问题？&#10;下一步准备怎么做？">{{ entry.content if entry else '' }}</textarea>
+        <small>支持换行与中英文内容。写清结论，也保留失败的路径。</small>
+      </label>
+
+      <label class="field">
+        <span>标签</span>
+        <input type="text" name="tags" maxlength="200" value="{{ entry.tags if entry else '' }}"
+               placeholder="例如：深度学习, 消融实验, 论文阅读">
+      </label>
+
+      {% if images %}
+      <div class="existing-images">
+        <span class="field-title">已上传图片</span>
+        <div class="image-grid">
+          {% for image in images %}
+          <figure>
+            <a href="{{ url_for('uploaded_file', filename=image.filename) }}" target="_blank">
+              <img src="{{ url_for('uploaded_file', filename=image.filename) }}" alt="{{ image.original_name }}">
+            </a>
+            <figcaption title="{{ image.original_name }}">{{ image.original_name }}</figcaption>
+            <button class="image-delete" type="submit" form="delete-image-{{ image.id }}" aria-label="删除图片">×</button>
+          </figure>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <label class="upload-zone" id="upload-zone">
+        <input type="file" name="images" id="image-input" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
+        <span class="upload-icon">＋</span>
+        <strong>添加实验图片</strong>
+        <small>点击选择或拖入图片，支持 PNG、JPG、GIF、WebP</small>
+        <span id="file-summary" class="file-summary"></span>
+      </label>
+
+      <div class="form-actions">
+        {% if entry %}
+          <button class="danger-link" type="submit" form="delete-entry" data-confirm="确认删除 {{ selected_date }} 的整篇日志吗？">删除日志</button>
+        {% else %}
+          <span></span>
+        {% endif %}
+        <button class="primary-button" type="submit"><span>保存科研日志</span> →</button>
+      </div>
+    </form>
+
+    {% if entry %}
+      <form id="delete-entry" action="{{ url_for('delete_entry', entry_id=entry.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      </form>
+      {% for image in images %}
+        <form id="delete-image-{{ image.id }}" action="{{ url_for('delete_image', image_id=image.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        </form>
+      {% endfor %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.journalCalendar = {
+    selectedDate: {{ selected_date | tojson }},
+    entryDates: {{ entry_dates | tojson }},
+    indexUrl: {{ url_for('index') | tojson }}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

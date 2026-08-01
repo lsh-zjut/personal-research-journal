@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#16382f">
+  <title>{% block title %}研迹 · 个人科研日志{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="科研日志首页">
+      <span class="brand-mark">研</span>
+      <span><strong>研迹</strong><small>RESEARCH NOTES</small></span>
+    </a>
+    <nav class="main-nav" aria-label="主导航">
+      <a class="{{ 'active' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">今日记录</a>
+      <a class="{{ 'active' if request.endpoint == 'history' }}" href="{{ url_for('history') }}">日志档案</a>
+    </nav>
+    <a class="today-button" href="{{ url_for('index', date=today) }}">回到今天</a>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack" aria-live="polite">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>{% block content %}{% endblock %}</main>
+  <footer>数据保存在本机 SQLite 数据库中 · 研迹 Research Notes</footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
