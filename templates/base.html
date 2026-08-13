@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#16382f">
-  <title>{% block title %}研迹 · 个人科研日志{% endblock %}</title>
+  <title>{% block title %}研迹 · lsh的个人日志{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -13,14 +13,15 @@
   <header class="site-header">
     <a class="brand" href="{{ url_for('index') }}" aria-label="科研日志首页">
       <span class="brand-mark">研</span>
-      <span><strong>研迹</strong><small>RESEARCH NOTES</small></span>
+      <span><strong>研迹 · lsh的个人日志</strong><small>RESEARCH NOTES</small></span>
     </a>
-    {% if session.get('authenticated') %}
+    {% if session.get('role') in ['visitor', 'admin'] %}
       <nav class="main-nav" aria-label="主导航">
         <a class="{{ 'active' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">今日记录</a>
         <a class="{{ 'active' if request.endpoint == 'history' }}" href="{{ url_for('history') }}">日志档案</a>
       </nav>
       <div class="header-actions">
+        <span class="role-badge {{ session.get('role') }}">{{ '管理员' if is_admin else '访客只读' }}</span>
         <a class="today-button" href="{{ url_for('index', date=today) }}">回到今天</a>
         <form action="{{ url_for('logout') }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

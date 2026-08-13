@@ -1,12 +1,14 @@
 @echo off
-chcp 65001 >nul
+setlocal
 cd /d "%~dp0"
-call conda activate research-journal
-if errorlevel 1 (
-  echo 无法激活 research-journal 环境，请先在 Anaconda Prompt 中运行本脚本。
-  pause
+
+set "PYTHON_EXE=D:\conda\Miniconda\envs\research-journal\python.exe"
+if not exist "%PYTHON_EXE%" (
+  echo The research-journal Python environment was not found.
+  echo Create it using the installation command in README.md.
   exit /b 1
 )
-echo 正在启动研迹科研日志，请在浏览器访问 http://127.0.0.1:5000
-python app.py
-pause
+
+echo Starting the local Research Journal at http://127.0.0.1:5000
+"%PYTHON_EXE%" app.py
+endlocal

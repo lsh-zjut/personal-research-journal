@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app import create_app
+from app import create_app, hash_password
 
 
 class JournalAppTest(unittest.TestCase):
@@ -14,7 +14,8 @@ class JournalAppTest(unittest.TestCase):
             {
                 "TESTING": True,
                 "SECRET_KEY": "test-secret",
-                "JOURNAL_PASSWORD": "test-password",
+                "VISITOR_PASSWORD_HASH": hash_password("visitor-password", iterations=1_000),
+                "ADMIN_PASSWORD_HASH": hash_password("admin-password", iterations=1_000),
                 "DATABASE": root / "test.db",
                 "UPLOAD_FOLDER": root / "uploads",
             }
@@ -29,7 +30,7 @@ class JournalAppTest(unittest.TestCase):
         with self.client.session_transaction() as session:
             return session["csrf_token"]
 
-    def login(self, password="test-password"):
+    def login(self, password="visitor-password"):
         return self.client.post(
             "/login",
             data={"csrf_token": self.csrf_token(), "password": password},
@@ -43,12 +44,41 @@ class JournalAppTest(unittest.TestCase):
 
     def test_login_home_and_history_render(self):
         self.assertIn("密码不正确".encode(), self.login("wrong").data)
-        self.assertIn("验证成功".encode(), self.login().data)
+        self.assertIn("访客验证成功".encode(), self.login().data)
         self.assertEqual(self.client.get("/").status_code, 200)
         self.assertEqual(self.client.get("/history").status_code, 200)
 
-    def test_create_update_search_and_delete_entry(self):
+    def test_login_rate_limit(self):
+        for _attempt in range(8):
+            self.assertEqual(self.login("wrong").status_code, 200)
+        self.assertEqual(self.login("wrong").status_code, 429)
+
+    def test_visitor_is_read_only_even_with_direct_requests(self):
         self.login()
+        token = self.csrf_token()
+        response = self.client.post(
+            "/save",
+            data={
+                "csrf_token": token,
+                "entry_date": "2026-08-02",
+                "title": "不应保存",
+                "content": "访客不能写入。",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("仅管理员".encode(), response.data)
+
+        with self.app.app_context():
+            from app import query_one
+
+            entry = query_one(
+                self.app, "SELECT * FROM entries WHERE entry_date = ?", ("2026-08-02",)
+            )
+        self.assertIsNone(entry)
+        self.assertNotIn("保存科研日志".encode(), self.client.get("/").data)
+
+    def test_create_update_search_and_delete_entry(self):
+        self.login("admin-password")
         token = self.csrf_token()
         response = self.client.post(
             "/save",
@@ -91,7 +121,7 @@ class JournalAppTest(unittest.TestCase):
         self.assertIn("该日科研日志已删除".encode(), response.data)
 
     def test_rejects_post_without_csrf(self):
-        self.login()
+        self.login("admin-password")
         response = self.client.post("/save", data={})
         self.assertEqual(response.status_code, 400)
 

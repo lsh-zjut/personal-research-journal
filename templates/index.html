@@ -31,11 +31,12 @@
     <div class="journal-heading">
       <div>
         <p class="eyebrow">DAILY LAB NOTE</p>
-        <h1>{{ entry.title if entry else '记录今天的研究进展' }}</h1>
+        <h1>{{ entry.title if entry else ('记录今天的研究进展' if is_admin else '当日暂无科研记录') }}</h1>
       </div>
       {% if entry %}<span class="saved-badge">已记录</span>{% else %}<span class="empty-badge">待记录</span>{% endif %}
     </div>
 
+    {% if is_admin %}
     <form class="journal-form" action="{{ url_for('save_entry') }}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-grid">
@@ -115,6 +116,48 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         </form>
       {% endfor %}
+    {% endif %}
+    {% else %}
+      <article class="readonly-journal">
+        <label class="field readonly-date-picker">
+          <span>查看日期</span>
+          <input type="date" value="{{ selected_date }}" data-date-navigate>
+        </label>
+
+        {% if entry %}
+          <div class="readonly-meta">
+            <span class="status status-{{ entry.progress }}">{{ entry.progress }}</span>
+            {% if entry.tags %}
+              <div class="tag-list">
+                {% for tag in entry.tags.split(',') %}<span># {{ tag.strip() }}</span>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="readonly-content">{{ entry.content }}</div>
+
+          {% if images %}
+          <div class="existing-images readonly-images">
+            <span class="field-title">实验图片</span>
+            <div class="image-grid">
+              {% for image in images %}
+              <figure>
+                <a href="{{ url_for('uploaded_file', filename=image.filename) }}" target="_blank" rel="noopener">
+                  <img src="{{ url_for('uploaded_file', filename=image.filename) }}" alt="{{ image.original_name }}">
+                </a>
+                <figcaption title="{{ image.original_name }}">{{ image.original_name }}</figcaption>
+              </figure>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="readonly-empty">
+            <span>⌁</span>
+            <h2>这一天还没有科研日志</h2>
+            <p>可以从左侧日历选择已有记录的日期。</p>
+          </div>
+        {% endif %}
+      </article>
     {% endif %}
   </section>
 </div>
